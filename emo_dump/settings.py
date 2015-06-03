@@ -12,21 +12,28 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+from configparser import RawConfigParser
+import logging.config
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_DIR = os.path.join(BASE_DIR, 'emo_dump')
 
+config = RawConfigParser()
+config.read(os.path.join(PROJECT_DIR, 'config.ini'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '=z23m8z^3ncrpj!#bz^&z%svp9si-2o&=72pq!r^kf%bn8idnh'
+SECRET_KEY = config.get('config', 'KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+CONSUMER_KEY = str(config.get('twitter', 'CONSUMER_KEY'))
+CONSUMER_SECRET = str(config.get('twitter', 'CONSUMER_SECRET'))
 
+ALLOWED_HOSTS = []
 
 # Application definition
 
@@ -37,6 +44,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'tweepy'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -55,7 +63,7 @@ ROOT_URLCONF = 'emo_dump.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'emo_dump', 'templates')],
+        'DIRS': [os.path.join(PROJECT_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
