@@ -4,5 +4,6 @@ from emo_dump import views
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^hello/$', views.hello)
+    url(r'^hello/$', views.hello),
+    url(r'^tweet/$', views.tweet_test)
 ]

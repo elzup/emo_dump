@@ -55,7 +55,7 @@ ROOT_URLCONF = 'emo_dump.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'emo_dump', 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
