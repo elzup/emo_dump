@@ -1,4 +1,5 @@
 import traceback
+import datetime
 
 from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
@@ -11,19 +12,23 @@ def hello(request):
 
 
 def index(request):
-    auth = tweepy.OAuthHandler(settings.CONSUMER_KEY, settings.CONSUMER_SECRET)
     if 'key' not in request.session:
         return render_to_response('no_login.html')
+    # TODO: 動的に デフォルトは認証ユーザ
+    target_screen_anme = 'arzzup'
+    api = get_api(request.session.get('key'), request.session.get('secret'))
+    tweets = api.user_timeline(screen_name=target_screen_anme, count=200)
+    limit = api.rate_limit_status(resources="statuses")
+    # 各要素の取り出し
+    limit_info = limit['resources']['statuses']['/statuses/user_timeline']
+    ts = datetime.datetime.fromtimestamp(int(limit_info['reset']))
+    limit_info['time_str'] = ts.strftime('%H:%M:%S')
+    return render_to_response('tweet.html', {'tweets': tweets, 'limit_info': limit_info})
 
-    print(request.session.get('key'), request.session.get('secret'))
-    auth.set_access_token(request.session.get('key'), request.session.get('secret'))
-    api = tweepy.API(auth_handler=auth)
-    tweets = api.home_timeline()
-    return render_to_response('tweet.html', {'tweets': tweets})
 
 def oauth_start(request):
-    CALLBACK_URL = 'http://localhost:8000/auth/end/'.encode('utf-8')
-    auth = tweepy.OAuthHandler(settings.CONSUMER_KEY, settings.CONSUMER_SECRET, CALLBACK_URL)
+    callback_url = 'http://localhost:8000/auth/end/'.encode('utf-8')
+    auth = get_auth(callback_url)
     try:
         auth_url = auth.get_authorization_url()
     except tweepy.TweepError:
@@ -34,7 +39,7 @@ def oauth_start(request):
 
 def oauth_end(request):
     verifier = request.GET.get('oauth_verifier')
-    auth = tweepy.OAuthHandler(settings.CONSUMER_KEY, settings.CONSUMER_SECRET)
+    auth = get_auth()
     # request.session.delete('request_token')
     token = request.session.get('request_token')
     auth.request_token = token
@@ -45,6 +50,17 @@ def oauth_end(request):
     request.session['secret'] = auth.access_token_secret
     return HttpResponseRedirect('/')
 
+
 def oauth_clear(request):
     request.session.clear()
     return HttpResponseRedirect('/')
+
+
+def get_api(token, secret):
+    auth = get_auth()
+    auth.set_access_token(token, secret)
+    return tweepy.API(auth_handler=auth)
+
+
+def get_auth(callback=None):
+    return tweepy.OAuthHandler(settings.CONSUMER_KEY, settings.CONSUMER_SECRET, callback)
