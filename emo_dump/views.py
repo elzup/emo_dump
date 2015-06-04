@@ -44,3 +44,7 @@ def oauth_end(request):
     request.session['key'] = auth.access_token
     request.session['secret'] = auth.access_token_secret
     return HttpResponseRedirect('/')
+
+def oauth_clear(request):
+    request.session.clear()
+    return HttpResponseRedirect('/')
