@@ -44,7 +44,9 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'tweepy'
+    'tweepy',
+    'MeCab',
+    'CaboCha',
 )
 
 MIDDLEWARE_CLASSES = (

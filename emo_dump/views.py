@@ -5,6 +5,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
 from django.shortcuts import render_to_response
 import tweepy
+import MeCab
+import CaboCha
 
 
 def hello(request):
@@ -23,6 +25,7 @@ def index(request):
     limit_info = limit['resources']['statuses']['/statuses/user_timeline']
     ts = datetime.datetime.fromtimestamp(int(limit_info['reset']))
     limit_info['time_str'] = ts.strftime('%H:%M:%S')
+    # print(limit_info)
     return render_to_response('tweet.html', {'tweets': tweets, 'limit_info': limit_info})
 
 
@@ -64,3 +67,23 @@ def get_api(token, secret):
 
 def get_auth(callback=None):
     return tweepy.OAuthHandler(settings.CONSUMER_KEY, settings.CONSUMER_SECRET, callback)
+
+
+def analyze_tweets(tweets):
+    pass
+
+
+def analyze_text(text):
+    pass
+
+
+def test(request):
+    line = '部屋が蒸し風呂のように暑い'
+    cp = CaboCha.Parser()
+    print(cp.parseToString(line))
+    tree = cp.parse(line)
+    for i in range(tree.token_size()):
+        token = tree.token(i)
+        print(token.surface)
+
+    return HttpResponse('test page')
