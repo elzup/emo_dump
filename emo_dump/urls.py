@@ -12,5 +12,4 @@ urlpatterns = [
     url(r'^auth/start/$', views.oauth_start),
     url(r'^auth/end/$', views.oauth_end),
     url(r'^auth/del/$', views.oauth_clear),
-    url(r'^test/$', views.test),
 ]

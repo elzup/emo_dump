@@ -7,8 +7,6 @@ from django.shortcuts import render_to_response
 import tweepy
 import CaboCha
 
-from functools import reduce
-
 
 def hello(request):
     return HttpResponse('Hello world')
@@ -21,13 +19,17 @@ def index(request):
     target_screen_anme = 'arzzup'
     api = get_api(request.session.get('key'), request.session.get('secret'))
     tweets = api.user_timeline(screen_name=target_screen_anme, count=200)
+
+    res = analyze_tweets(tweets)
+
+    # limit
     limit = api.rate_limit_status(resources="statuses")
     # 各要素の取り出し
     limit_info = limit['resources']['statuses']['/statuses/user_timeline']
     ts = datetime.datetime.fromtimestamp(int(limit_info['reset']))
     limit_info['time_str'] = ts.strftime('%H:%M:%S')
-    # print(limit_info)
-    return render_to_response('tweet.html', {'tweets': tweets, 'limit_info': limit_info})
+
+    return render_to_response('tweet.html', {'res': res, 'tweets': tweets, 'limit_info': limit_info})
 
 
 def oauth_start(request):
@@ -69,58 +71,36 @@ def get_auth(callback=None):
 
 
 def analyze_tweets(tweets):
-    pass
+    return emo_parse(tweets[0].text)
 
 
-def analyze_text(text):
-    pass
-
-
-def test(request):
-    # line = 'プロ生ちゃんかわいい'
-    # line = 'すもももももももものうち'
-    line = 'この美味しいカレーは辛くない'
+def emo_parse(text):
     cp = CaboCha.Parser()
-    print(cp.parseToString(line))
-    tree = cp.parse(line)
+    # print(cp.parseToString(text))
+    tree = cp.parse(text)
 
     emo_list = {}
     for i in range(tree.chunk_size()):
         chunk = tree.chunk(i)
+        text = chunk_text(tree, i)
+        token = tree.token(chunk.head_pos + chunk.token_pos)
+
         # フィルタ: 何かに係っている形容詞であるか
         # NOTE: 汚い
-        feature_list = [chunk.feature_list(i) for j in range(chunk.feature_list_size)]
-        adjective_str = '0:形容詞'
-        is_adjective_chunk = reduce(lambda a, b: a or b.find(adjective_str), feature_list, False)
-        if chunk.link.real == -1 or not is_adjective_chunk:
+        # is_adjective_chunk = reduce(lambda a, b: a or b.find(adjective_str), feature_list, False)
+        print("a", token.feature.split(',')[0])
+        # if chunk.link.real == -1 or not token.feature.split(',')[0] == "形容詞":
+        if chunk.link.real == -1:
             continue
 
         link_chunk = tree.chunk(chunk.link)
-        link_chunk_str = ",".join([tree.token(i).surface for i in range(link_chunk.head_pos, link_chunk.head_pos + link_chunk.token_size)])
-        text = " ".join([tree.token(i).surface for i in range(chunk.token_pos, chunk.token_pos + chunk.token_size)])
-        emo_list[text] = link_chunk_str
-        print('Chunk:', i)
-        print(' Score:', chunk.score)
-        print(' Link:', chunk.link)
-        print(' Size:', chunk.token_size)
-        print(' Pos:', chunk.token_pos)
-        print(' Func:', chunk.func_pos, tree.token(chunk.token_pos + chunk.func_pos).surface) # 機能語
-        print(' Features:',)
-        for j in range(chunk.feature_list_size):
-            print(chunk.feature_list(j),)
-        print(' Text:', text)
-        print
-        print
+        link_token = tree.token(link_chunk.head_pos + link_chunk.token_pos)
 
-    print(emo_list)
-    for i in range(tree.token_size()):
-        token = tree.token(i)
-        print('Surface:', token.surface)
-        print(' Normalized:', token.normalized_surface)
-        print(' Feature:', token.feature)
-        print(' NE:', token.ne) # 固有表現
-        print(' Info:', token.additional_info)
-        print(' Chunk:', token.chunk)
-        print
+        emo_list[link_token.surface] = text
 
-    return HttpResponse('test page')
+    return emo_list
+
+
+def chunk_text(tree, pos, delimiter=''):
+    chunk = tree.chunk(pos)
+    return delimiter.join([tree.token(i).surface for i in range(chunk.token_pos, chunk.token_pos + chunk.token_size)])

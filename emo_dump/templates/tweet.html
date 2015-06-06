@@ -2,10 +2,13 @@
 {% block title %}テストページ{% endblock %}
 
 {% block content %}
-   テストbody
+    テストbody<br/>
+    <pre>
+    {{ res }}
     {% for tweet in tweets %}
         {{ tweet.text }}<br>
     {% endfor %}
+    </pre>
     <p>{{ limit_info.remaining }} / {{ limit_info.limit }} 全回復[{{ limit_info.time_str }}]</p>
     <a href="/auth/del">ログアウト</a>
 {% endblock %}
