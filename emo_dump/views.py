@@ -18,7 +18,7 @@ def index(request):
         return render_to_response('no_login.html')
     # TODO: 動的に デフォルトは認証ユーザ
     target_screen_anme = None
-    statuses = tm.user_timeline(target_screen_anme, page_count=10)
+    statuses = tm.user_timeline(target_screen_anme, page_count=3)
 
     cm = CabochaManager()
     res = cm.analyze_tweets(statuses)
@@ -28,11 +28,16 @@ def index(request):
     ts = datetime.datetime.fromtimestamp(int(limit_info['reset']))
     limit_info['time_str'] = ts.strftime('%H:%M:%S')
 
+    new_time = statuses[0].created_at
+    old_time = statuses[-1].created_at
+
     return render_to_response('tweet.html', {
         'res': res.items(),
         'statuses': statuses,
         'limit_info': limit_info,
         'status_count': len(statuses),
+        'new_time': new_time,
+        'old_time': old_time,
     })
 
 

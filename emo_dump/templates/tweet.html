@@ -7,6 +7,7 @@
         <p>{{ key }} -> {{ val }}</p>
     {% endfor %}
     <p>取得数: {{ status_count }}</p>
+    <p>範囲: {{ new_time }} - {{ old_time }}</p>
     <p>{{ limit_info.remaining }} / {{ limit_info.limit }} 全回復[{{ limit_info.time_str }}]</p>
     <a href="/auth/del">ログアウト</a>
 {% endblock %}

@@ -24,7 +24,7 @@ class TwitterManager:
     def get_auth(self, callback=None):
         return tweepy.OAuthHandler(settings.CONSUMER_KEY, settings.CONSUMER_SECRET, callback)
 
-    def user_timeline(self, screen_name='arzzup', page_count=1):
+    def user_timeline(self, screen_name=None, page_count=1):
         statuses_all = []
         max_id = None
 
@@ -34,24 +34,6 @@ class TwitterManager:
                                      include_rts=False).pages(page_count):
             print(len(status))
             statuses_all.extend(status)
-        return statuses_all
-
-        for page in range(1, page_count + 1):
-            statuses = []
-            for status in tweepy.Cursor(self.api.user_timeline).pages(page):
-                statuses.append(status)
-            statuses_all.extend(statuses)
-
-            # statuses = self.api.user_timeline(screen_name=screen_name, max_id=max_id, count=200, include_rts=False)
-            print(len(statuses))
-            # if not statuses:
-            #     break
-            # statuses_all.extend(statuses)
-            # max_id = statuses[0].id
-            # for st in statuses:
-            #     max_id = min(max_id, st.id)
-
-
         return statuses_all
 
     def rate_limit_status_userstimeline(self):
