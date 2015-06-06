@@ -85,11 +85,13 @@ def analyze_tweets(tweets):
     return results
 
 
-
 def emo_parse(text):
     """
+    テキストから嗜好辞書を作成する.
+    {対象: 感性, 対象2: 感性2...}
+    TODO: 対象の重複による上書きをなくす
 
-    :param text:
+    :param text: 解析するテキスト
     :return: dict[string, string]
     """
     cp = CaboCha.Parser()
@@ -99,20 +101,34 @@ def emo_parse(text):
     emo_list = {}
     for i in range(tree.chunk_size()):
         chunk = tree.chunk(i)
-        text = chunk_text(tree, i)
-        token = tree.token(chunk.head_pos + chunk.token_pos)
 
-        # フィルタ: 何かに係っている形容詞であるか
+        # 係っているか
         # NOTE: 汚い
-        # is_adjective_chunk = reduce(lambda a, b: a or b.find(adjective_str), feature_list, False)
-        # if chunk.link.real == -1 or not token.feature.split(',')[0] == "形容詞":
         if chunk.link.real == -1:
             continue
 
+        token = tree.token(chunk.head_pos + chunk.token_pos)
+        # TODO: リファクタリング
+        _chunk_text = chunk_text(tree, i)
+
+        # 対象chunk
         link_chunk = tree.chunk(chunk.link)
         link_token = tree.token(link_chunk.head_pos + link_chunk.token_pos)
+        link_chunk_text = chunk_text(tree, chunk.link)
 
-        emo_list[link_token.surface] = text
+        is_adj_chunk = token.feature.split(',')[0] == "形容詞"
+        is_adj_link_chunk = link_token.feature.split(',')[0] == "形容詞"
+
+        # print(_chunk_text, "->",  link_chunk_text)
+        # print(is_adj_chunk, is_adj_link_chunk)
+        # 形容詞を含んでいるか
+        if not is_adj_chunk and not is_adj_link_chunk:
+            continue
+
+        if is_adj_chunk:
+            emo_list[token.surface] = link_chunk_text
+        else:
+            emo_list[link_token.surface] = _chunk_text
 
     return emo_list
 
