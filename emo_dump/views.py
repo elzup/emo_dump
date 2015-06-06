@@ -6,6 +6,7 @@ from django.conf import settings
 from django.shortcuts import render_to_response
 import tweepy
 import CaboCha
+import re
 
 
 def hello(request):
@@ -78,7 +79,8 @@ def analyze_tweets(tweets):
     """
     results = {}
     for tweet in tweets:
-        for mod, ref in emo_parse(tweet.text).items():
+        text = filter_text(tweet.text)
+        for mod, ref in emo_parse(text).items():
             if mod not in results:
                 results[mod] = []
             results[mod].append(ref)
@@ -173,6 +175,13 @@ def chunk_text(tree, chunk, delimiter=''):
     :return: string
     """
     return delimiter.join([tree.token(i).surface for i in range(chunk.token_pos, chunk.token_pos + chunk.token_size)])
+
+
+def filter_text(text):
+    # url 取り除き
+    text = re.sub(r"https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", '', text)
+    text = re.sub(r"「.*」", '', text)
+    return text
 
 
 def chunk_text_pos(tree, pos, delimiter=''):
