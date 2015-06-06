@@ -5,7 +5,6 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
 from django.shortcuts import render_to_response
 import tweepy
-import MeCab
 import CaboCha
 
 
@@ -46,9 +45,7 @@ def oauth_end(request):
     # request.session.delete('request_token')
     token = request.session.get('request_token')
     auth.request_token = token
-
     auth.get_access_token(verifier)
-
     request.session['key'] = auth.access_token
     request.session['secret'] = auth.access_token_secret
     return HttpResponseRedirect('/')
@@ -78,12 +75,42 @@ def analyze_text(text):
 
 
 def test(request):
-    line = '部屋が蒸し風呂のように暑い'
+    line = 'プロ生ちゃんかわいい'
     cp = CaboCha.Parser()
     print(cp.parseToString(line))
     tree = cp.parse(line)
+
+    emo_list = {}
+    for i in range(tree.chunk_size()):
+        chunk = tree.chunk(i)
+#        print(chunk.link.numerator)
+        if chunk.link.real == -1:
+            continue
+        link_chunk = tree.chunk(chunk.link)
+        link_chunk_str = ",".join([tree.token(i).surface for i in range(link_chunk.head_pos, link_chunk.head_pos + link_chunk.token_size)])
+        chunk_str = ",".join([tree.token(i).surface for i in range(chunk.head_pos, chunk.head_pos + chunk.token_size)])
+        emo_list[chunk_str] = link_chunk_str
+        print('Chunk:', i)
+        print(' Score:', chunk.score)
+        print(' Link:', chunk.link)
+        print(' Size:', chunk.token_size)
+        print(' Pos:', chunk.token_pos)
+        print(' Func:', chunk.func_pos, tree.token(chunk.token_pos + chunk.func_pos).surface) # 機能語
+        print(' Features:',)
+#        for j in range(chunk.feature_list_size):
+#            print(chunk.feature_list(j),)
+        print
+        print
+
+    print(emo_list)
     for i in range(tree.token_size()):
         token = tree.token(i)
-        print(token.surface)
+        print('Surface:', token.surface)
+        print(' Normalized:', token.normalized_surface)
+        print(' Feature:', token.feature)
+        print(' NE:', token.ne) # 固有表現
+        print(' Info:', token.additional_info)
+        print(' Chunk:', token.chunk)
+        print
 
     return HttpResponse('test page')
