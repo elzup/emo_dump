@@ -7,6 +7,8 @@ from django.shortcuts import render_to_response
 import tweepy
 import CaboCha
 
+from functools import reduce
+
 
 def hello(request):
     return HttpResponse('Hello world')
@@ -75,7 +77,9 @@ def analyze_text(text):
 
 
 def test(request):
-    line = 'プロ生ちゃんかわいい'
+    # line = 'プロ生ちゃんかわいい'
+    # line = 'すもももももももものうち'
+    line = 'この美味しいカレーは辛くない'
     cp = CaboCha.Parser()
     print(cp.parseToString(line))
     tree = cp.parse(line)
@@ -83,13 +87,18 @@ def test(request):
     emo_list = {}
     for i in range(tree.chunk_size()):
         chunk = tree.chunk(i)
-#        print(chunk.link.numerator)
-        if chunk.link.real == -1:
+        # フィルタ: 何かに係っている形容詞であるか
+        # NOTE: 汚い
+        feature_list = [chunk.feature_list(i) for j in range(chunk.feature_list_size)]
+        adjective_str = '0:形容詞'
+        is_adjective_chunk = reduce(lambda a, b: a or b.find(adjective_str), feature_list, False)
+        if chunk.link.real == -1 or not is_adjective_chunk:
             continue
+
         link_chunk = tree.chunk(chunk.link)
         link_chunk_str = ",".join([tree.token(i).surface for i in range(link_chunk.head_pos, link_chunk.head_pos + link_chunk.token_size)])
-        chunk_str = ",".join([tree.token(i).surface for i in range(chunk.head_pos, chunk.head_pos + chunk.token_size)])
-        emo_list[chunk_str] = link_chunk_str
+        text = " ".join([tree.token(i).surface for i in range(chunk.token_pos, chunk.token_pos + chunk.token_size)])
+        emo_list[text] = link_chunk_str
         print('Chunk:', i)
         print(' Score:', chunk.score)
         print(' Link:', chunk.link)
@@ -97,8 +106,9 @@ def test(request):
         print(' Pos:', chunk.token_pos)
         print(' Func:', chunk.func_pos, tree.token(chunk.token_pos + chunk.func_pos).surface) # 機能語
         print(' Features:',)
-#        for j in range(chunk.feature_list_size):
-#            print(chunk.feature_list(j),)
+        for j in range(chunk.feature_list_size):
+            print(chunk.feature_list(j),)
+        print(' Text:', text)
         print
         print
 
