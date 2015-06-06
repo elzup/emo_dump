@@ -33,6 +33,8 @@ DEBUG = True
 CONSUMER_KEY = str(config.get('twitter', 'CONSUMER_KEY')).encode('utf-8')
 CONSUMER_SECRET = str(config.get('twitter', 'CONSUMER_SECRET')).encode('utf-8')
 
+CALLBACK_URL = 'http://localhost:8000/auth/end/'.encode('utf-8')
+
 ALLOWED_HOSTS = []
 
 # Application definition

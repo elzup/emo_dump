@@ -1,12 +1,11 @@
-import traceback
 import datetime
+import re
 
 from django.http import HttpResponse, HttpResponseRedirect
-from django.conf import settings
 from django.shortcuts import render_to_response
-import tweepy
 import CaboCha
-import re
+
+from emo_dump.classes.twitter_manager import TwitterManager
 
 
 def hello(request):
@@ -14,19 +13,18 @@ def hello(request):
 
 
 def index(request):
-    if 'key' not in request.session:
+    """トップページ"""
+    tm = TwitterManager(request.session)
+    if not tm.is_login:
         return render_to_response('no_login.html')
     # TODO: 動的に デフォルトは認証ユーザ
-    target_screen_anme = 'arzzup'
-    api = get_api(request.session.get('key'), request.session.get('secret'))
-    tweets = api.user_timeline(screen_name=target_screen_anme, count=200, include_rts=False)
+    target_screen_anme = None
+    tweets = tm.user_timeline(target_screen_anme, count=200)
 
     res = analyze_tweets(tweets)
 
     # limit
-    limit = api.rate_limit_status(resources="statuses")
-    # 各要素の取り出し
-    limit_info = limit['resources']['statuses']['/statuses/user_timeline']
+    limit_info = tm.rate_limit_status_userstimeline()
     ts = datetime.datetime.fromtimestamp(int(limit_info['reset']))
     limit_info['time_str'] = ts.strftime('%H:%M:%S')
 
@@ -34,41 +32,27 @@ def index(request):
 
 
 def oauth_start(request):
-    callback_url = 'http://localhost:8000/auth/end/'.encode('utf-8')
-    auth = get_auth(callback_url)
-    try:
-        auth_url = auth.get_authorization_url()
-    except tweepy.TweepError:
-        print(traceback.format_exc())
-    request.session['request_token'] = auth.request_token
-    return HttpResponseRedirect(auth_url)
+    """Twitter認証開始ページ"""
+    tm = TwitterManager(request.session, set_api=False)
+    tm.auth_start()
+    request.session['request_token'] = tm.auth.request_token
+    return HttpResponseRedirect(tm.auth_url)
 
 
 def oauth_end(request):
+    """Twitter認証 Callback ページ"""
     verifier = request.GET.get('oauth_verifier')
-    auth = get_auth()
-    # request.session.delete('request_token')
-    token = request.session.get('request_token')
-    auth.request_token = token
-    auth.get_access_token(verifier)
-    request.session['key'] = auth.access_token
-    request.session['secret'] = auth.access_token_secret
+    tm = TwitterManager(request.session, set_api=False)
+    tm.auth_end(verifier=verifier,
+                token=request.session.get('request_token'))
+    request.session['key'] = tm.auth.access_token
+    request.session['secret'] = tm.auth.access_token_secret
     return HttpResponseRedirect('/')
 
 
 def oauth_clear(request):
     request.session.clear()
     return HttpResponseRedirect('/')
-
-
-def get_api(token, secret):
-    auth = get_auth()
-    auth.set_access_token(token, secret)
-    return tweepy.API(auth_handler=auth)
-
-
-def get_auth(callback=None):
-    return tweepy.OAuthHandler(settings.CONSUMER_KEY, settings.CONSUMER_SECRET, callback)
 
 
 def analyze_tweets(tweets):
@@ -122,7 +106,7 @@ def emo_parse(text):
 
         # 形容詞節, 名詞節のペアであるか
         if \
-           not (chunk_part == "名詞" and link_chunk_part == "形容詞"):
+                not (chunk_part == "名詞" and link_chunk_part == "形容詞"):
             continue
 
         chunk_indep = chunk_independant(tree, chunk)
