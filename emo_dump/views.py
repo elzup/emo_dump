@@ -18,17 +18,22 @@ def index(request):
         return render_to_response('no_login.html')
     # TODO: 動的に デフォルトは認証ユーザ
     target_screen_anme = None
-    tweets = tm.user_timeline(target_screen_anme, count=200)
+    statuses = tm.user_timeline(target_screen_anme, page_count=10)
 
     cm = CabochaManager()
-    res = cm.analyze_tweets(tweets)
+    res = cm.analyze_tweets(statuses)
 
     # limit
     limit_info = tm.rate_limit_status_userstimeline()
     ts = datetime.datetime.fromtimestamp(int(limit_info['reset']))
     limit_info['time_str'] = ts.strftime('%H:%M:%S')
 
-    return render_to_response('tweet.html', {'res': res.items(), 'tweets': tweets, 'limit_info': limit_info})
+    return render_to_response('tweet.html', {
+        'res': res.items(),
+        'statuses': statuses,
+        'limit_info': limit_info,
+        'status_count': len(statuses),
+    })
 
 
 def oauth_start(request):
