@@ -75,11 +75,11 @@ def analyze_tweets(tweets):
     """
 
     :param tweets:
-    :return: dict[string, list[string]]
+    :return: dict[str, list[str]]
     """
     results = {}
     for tweet in tweets:
-        text = filter_text(tweet.text)
+        text = filter_text(tweet)
         for mod, ref in emo_parse(text).items():
             if mod not in results:
                 results[mod] = []
@@ -94,7 +94,7 @@ def emo_parse(text):
     TODO: 対象の重複による上書きをなくす
 
     :param text: 解析するテキスト
-    :return: dict[string, string]
+    :return: dict[str, str]
     """
     cp = CaboCha.Parser()
     # print(cp.parseToString(text))
@@ -111,12 +111,10 @@ def emo_parse(text):
 
         token = tree.token(chunk.head_pos + chunk.token_pos)
         # TODO: リファクタリング
-        _chunk_text = chunk_text(tree, chunk)
 
         # 対象chunk
         link_chunk = tree.chunk(chunk.link)
         link_token = tree.token(link_chunk.head_pos + link_chunk.token_pos)
-        link_chunk_text = chunk_text(tree, link_chunk)
 
         # 分詞節
         chunk_part = token.feature.split(',')[0]
@@ -129,6 +127,8 @@ def emo_parse(text):
 
         chunk_indep = chunk_independant(tree, chunk)
         link_chunk_indep = chunk_independant(tree, link_chunk)
+        if chunk_indep == "" or link_chunk_indep == "":
+            continue
 
         if chunk_part == "形容詞":
             chunk_indep, link_chunk_indep = link_chunk_indep, chunk_indep
@@ -142,18 +142,19 @@ def chunk_independant(tree, chunk):
     """
     自立語のみを返す
     :param chunk:
-    :return: string
+    :return: str
     """
     text = ''
+    text_all = ''
     for i in range(chunk.token_pos, chunk.token_pos + chunk.token_size):
         token = tree.token(i)
-#         print(token.surface)
-#         print(token.feature.split(",")[1])
-#         print(is_indepenedant(token.feature.split(",")[1]))
-#        print()
+        text_all += token.surface
         if not is_indepenedant(token.feature.split(",")[1]):
+            print("   [", token.surface, token.feature.split(",")[1], "]")
+            continue
             break
         text += token.surface
+    print(text_all, "->", text)
     return text
 
 
@@ -161,27 +162,39 @@ def is_indepenedant(part):
     """
     自立語であるかどうか
     :param part:
-    :return: True|False
+    :return: bool
     """
-    return part in ["自立", "固有名詞", "数", "一般", "形容動詞語幹", "接尾"]
+    return part in ["自立", "固有名詞", "数", "一般", "形容動詞語幹", "接尾", "副詞可能", "サ変接続"]
+
+
+def filter_text(tweet):
+    """
+    ツイートから適したテキストを返す
+    係り受け解析前のフィルタをする
+    :param tweepy.Status tweet:
+    :return: str
+    """
+    rep_to_sn = tweet.in_reply_to_screen_name
+    text = tweet.text
+    # url, 引用文 取り除き
+    text = re.sub(r"https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", '', text)
+    text = re.sub(r"「.*」", '', text)
+    text = re.sub(r'"', '', text)
+    if rep_to_sn:
+        # 先頭の ScreenName のみ削除
+        text = re.sub(r"^@%s" % rep_to_sn, '', text)
+    return text
 
 
 def chunk_text(tree, chunk, delimiter=''):
     """
     chunk 全体のテキストを返す
-    :param tree:
-    :param pos:
-    :param delimiter: string
-    :return: string
+    :param tree: CaboCha.Tree
+    :param chunk: CaboCha.Chunk
+    :param delimiter: str
+    :return: str
     """
     return delimiter.join([tree.token(i).surface for i in range(chunk.token_pos, chunk.token_pos + chunk.token_size)])
-
-
-def filter_text(text):
-    # url 取り除き
-    text = re.sub(r"https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", '', text)
-    text = re.sub(r"「.*」", '', text)
-    return text
 
 
 def chunk_text_pos(tree, pos, delimiter=''):
@@ -189,7 +202,7 @@ def chunk_text_pos(tree, pos, delimiter=''):
     chunk 全体のテキストを返す
     :param tree:
     :param pos: int
-    :param delimiter: string
+    :param delimiter: str
     :return:
     """
     chunk_text(tree, tree.chunk(pos), delimiter=delimiter)
