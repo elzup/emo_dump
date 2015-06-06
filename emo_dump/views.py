@@ -109,37 +109,78 @@ def emo_parse(text):
 
         token = tree.token(chunk.head_pos + chunk.token_pos)
         # TODO: リファクタリング
-        _chunk_text = chunk_text(tree, i)
+        _chunk_text = chunk_text(tree, chunk)
 
         # 対象chunk
         link_chunk = tree.chunk(chunk.link)
         link_token = tree.token(link_chunk.head_pos + link_chunk.token_pos)
-        link_chunk_text = chunk_text(tree, chunk.link)
+        link_chunk_text = chunk_text(tree, link_chunk)
 
-        is_adj_chunk = token.feature.split(',')[0] == "形容詞"
-        is_adj_link_chunk = link_token.feature.split(',')[0] == "形容詞"
+        # 分詞節
+        chunk_part = token.feature.split(',')[0]
+        link_chunk_part = link_token.feature.split(',')[0]
 
-        # print(_chunk_text, "->",  link_chunk_text)
-        # print(is_adj_chunk, is_adj_link_chunk)
-        # 形容詞を含んでいるか
-        if not is_adj_chunk and not is_adj_link_chunk:
+        # 形容詞節, 名詞節のペアであるか
+        if \
+           not (chunk_part == "名詞" and link_chunk_part == "形容詞"):
             continue
 
-        if is_adj_chunk:
-            emo_list[token.surface] = link_chunk_text
-        else:
-            emo_list[link_token.surface] = _chunk_text
+        chunk_indep = chunk_independant(tree, chunk)
+        link_chunk_indep = chunk_independant(tree, link_chunk)
+
+        if chunk_part == "形容詞":
+            chunk_indep, link_chunk_indep = link_chunk_indep, chunk_indep
+
+        emo_list[chunk_indep] = link_chunk_indep
 
     return emo_list
 
 
-def chunk_text(tree, pos, delimiter=''):
+def chunk_independant(tree, chunk):
     """
+    自立語のみを返す
+    :param chunk:
+    :return: string
+    """
+    text = ''
+    for i in range(chunk.token_pos, chunk.token_pos + chunk.token_size):
+        token = tree.token(i)
+#         print(token.surface)
+#         print(token.feature.split(",")[1])
+#         print(is_indepenedant(token.feature.split(",")[1]))
+#        print()
+        if not is_indepenedant(token.feature.split(",")[1]):
+            break
+        text += token.surface
+    return text
 
+
+def is_indepenedant(part):
+    """
+    自立語であるかどうか
+    :param part:
+    :return: True|False
+    """
+    return part in ["自立", "固有名詞", "数", "一般", "形容動詞語幹", "接尾"]
+
+
+def chunk_text(tree, chunk, delimiter=''):
+    """
+    chunk 全体のテキストを返す
     :param tree:
     :param pos:
     :param delimiter: string
     :return: string
     """
-    chunk = tree.chunk(pos)
     return delimiter.join([tree.token(i).surface for i in range(chunk.token_pos, chunk.token_pos + chunk.token_size)])
+
+
+def chunk_text_pos(tree, pos, delimiter=''):
+    """
+    chunk 全体のテキストを返す
+    :param tree:
+    :param pos: int
+    :param delimiter: string
+    :return:
+    """
+    chunk_text(tree, tree.chunk(pos), delimiter=delimiter)
