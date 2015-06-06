@@ -4,7 +4,9 @@
 {% block content %}
     テストbody<br/>
     <pre>
-    {{ res }}
+    {% for key, val in res %}
+        {{ key }} -> {{ val }}
+    {% endfor %}
     {% for tweet in tweets %}
         {{ tweet.text }}<br>
     {% endfor %}

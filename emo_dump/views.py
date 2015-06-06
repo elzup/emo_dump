@@ -18,7 +18,7 @@ def index(request):
     # TODO: 動的に デフォルトは認証ユーザ
     target_screen_anme = 'arzzup'
     api = get_api(request.session.get('key'), request.session.get('secret'))
-    tweets = api.user_timeline(screen_name=target_screen_anme, count=200)
+    tweets = api.user_timeline(screen_name=target_screen_anme, count=200, include_rts=False)
 
     res = analyze_tweets(tweets)
 
@@ -29,7 +29,7 @@ def index(request):
     ts = datetime.datetime.fromtimestamp(int(limit_info['reset']))
     limit_info['time_str'] = ts.strftime('%H:%M:%S')
 
-    return render_to_response('tweet.html', {'res': res, 'tweets': tweets, 'limit_info': limit_info})
+    return render_to_response('tweet.html', {'res': res.items(), 'tweets': tweets, 'limit_info': limit_info})
 
 
 def oauth_start(request):
@@ -71,10 +71,27 @@ def get_auth(callback=None):
 
 
 def analyze_tweets(tweets):
-    return emo_parse(tweets[0].text)
+    """
+
+    :param tweets:
+    :return: dict[string, list[string]]
+    """
+    results = {}
+    for tweet in tweets:
+        for mod, ref in emo_parse(tweet.text).items():
+            if mod not in results:
+                results[mod] = []
+            results[mod].append(ref)
+    return results
+
 
 
 def emo_parse(text):
+    """
+
+    :param text:
+    :return: dict[string, string]
+    """
     cp = CaboCha.Parser()
     # print(cp.parseToString(text))
     tree = cp.parse(text)
@@ -88,7 +105,6 @@ def emo_parse(text):
         # フィルタ: 何かに係っている形容詞であるか
         # NOTE: 汚い
         # is_adjective_chunk = reduce(lambda a, b: a or b.find(adjective_str), feature_list, False)
-        print("a", token.feature.split(',')[0])
         # if chunk.link.real == -1 or not token.feature.split(',')[0] == "形容詞":
         if chunk.link.real == -1:
             continue
@@ -102,5 +118,12 @@ def emo_parse(text):
 
 
 def chunk_text(tree, pos, delimiter=''):
+    """
+
+    :param tree:
+    :param pos:
+    :param delimiter: string
+    :return: string
+    """
     chunk = tree.chunk(pos)
     return delimiter.join([tree.token(i).surface for i in range(chunk.token_pos, chunk.token_pos + chunk.token_size)])
