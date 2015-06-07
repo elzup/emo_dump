@@ -17,8 +17,13 @@ def index(request):
     if not tm.is_login:
         return render_to_response('no_login.html')
     # TODO: 動的に デフォルトは認証ユーザ
-    target_screen_anme = None
-    statuses = tm.user_timeline(target_screen_anme, page_count=3)
+    target_screen_anme = request.GET.get('sn')
+    page_count = int(request.GET.get('pc'))
+    if not page_count:
+        # TODO: default constants
+        page_count = 3
+
+    statuses = tm.user_timeline(target_screen_anme, page_count=page_count)
 
     cm = CabochaManager()
     res = cm.analyze_tweets(statuses)
