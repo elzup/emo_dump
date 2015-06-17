@@ -24,6 +24,9 @@ class TwitterManager:
     def get_auth(self, callback=None):
         return tweepy.OAuthHandler(settings.CONSUMER_KEY, settings.CONSUMER_SECRET, callback)
 
+    def me(self):
+        return self.api.me()
+
     def user_timeline(self, screen_name=None, page_count=1):
         statuses_all = []
         max_id = None

@@ -19,10 +19,14 @@ def index(request):
     # TODO: 動的に デフォルトは認証ユーザ
     target_screen_anme = request.GET.get('sn')
     page_count = request.GET.get('pc')
+
+    if not target_screen_anme:
+        target_screen_anme = tm.me().screen_name
+
     if not page_count:
         # TODO: default constants
         page_count = 3
-    if page_count:
+    else:
         page_count = int(page_count)
 
     statuses = tm.user_timeline(target_screen_anme, page_count=page_count)
@@ -39,6 +43,7 @@ def index(request):
     old_time = statuses[-1].created_at
 
     return render_to_response('tweet.html', {
+        'screen_name': target_screen_anme,
         'res': res.items(),
         'statuses': statuses,
         'limit_info': limit_info,
