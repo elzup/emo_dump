@@ -1,5 +1,6 @@
 gulp = require 'gulp'
 gutil = require 'gulp-util'
+koutSwiss = require 'kouto-swiss'
 stylus = require 'gulp-stylus'
 
 $ = require('gulp-load-plugins')()
@@ -62,12 +63,12 @@ gulp.task "stylus", ->
     .pipe $.sourcemaps.init()
     .pipe stylus
       compress: true
-      use: koutoSwiss()
-    .pipe autoprefixer
+      use: koutSwiss()
+    .pipe $.autoprefixer
       browsers: ['last 2 versions']
     .pipe $.sourcemaps.write('.')
     .on 'error', handleError
-    .pipe gulp.dest config.styles.destination
+    .pipe gulp.dest config.stylus.destination
 
 gulp.task "sass", ->
   gulp
