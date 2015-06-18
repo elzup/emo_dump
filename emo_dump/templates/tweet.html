@@ -4,20 +4,31 @@
 {% block content %}
     <h1>EmoDump</h1>
     <p>ログインユーザ:
-        <a href="http://twitter.com/{{ screen_name }}">@{{ screen_name }}</a>
-        <img src='http://www.paper-glasses.com/api/twipi/{{ screen_name }}/mini' alt='profile image' width='24' height='24'>
+        <a href="http://twitter.com/{{ user.screen_name }}">@{{ user.screen_name }}</a>
+        <img src='http://www.paper-glasses.com/api/twipi/{{ user.screen_name }}/mini' alt='profile image' width='24'
+             height='24'>
     </p>
-    <p>取得数: {{ status_count }}</p>
-    <p>範囲: {{ new_time }} - {{ old_time }}</p>
-    <p>{{ limit_info.remaining }} / {{ limit_info.limit }} 全回復[{{ limit_info.time_str }}]</p>
     <form method="get">
         ユーザ名: <input type="search" name="sn">
         消費API: <input type="number" value="3" min="1" max="180" name="pc">
         <input type="submit" value="go">
-    <!-- TODO: API解説 3推奨 -->
+        <!-- TODO: API解説 3推奨 -->
     </form>
-    <a href="/auth/del">ログアウト</a>
-    {% for key, val in res %}
-        <p>{{ key }} -> {{ val }}</p>
-    {% endfor %}
+    <p>{{ limit_info.remaining }} / {{ limit_info.limit }} 全回復[{{ limit_info.time_str }}]</p>
+
+    {% if target_sn %}
+        <h2>結果</h2>
+
+        <p>対象ユーザ:
+            <a href="http://twitter.com/{{ target_sn }}">@{{ target_sn }}</a>
+            <img src='http://www.paper-glasses.com/api/twipi/{{ target_sn }}/mini' alt='profile image' width='24'
+                 height='24'>
+        </p>
+        <p>取得数: {{ status_count }}</p>
+        <p>範囲: {{ new_time }} - {{ old_time }}</p>
+        <a href="/auth/del">ログアウト</a>
+        {% for key, val in res %}
+            <p>{{ key }} -> {{ val }}</p>
+        {% endfor %}
+    {% endif %}
 {% endblock %}

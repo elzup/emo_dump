@@ -21,7 +21,11 @@ def index(request):
     page_count = request.GET.get('pc')
 
     if not target_screen_anme:
-        target_screen_anme = tm.me().screen_name
+        limit_info = tm.rate_limit_status_userstimeline()
+        return render_to_response('tweet.html', {
+            'user': tm.me(),
+            'limit_info': limit_info,
+        })
 
     if not page_count:
         # TODO: default constants
@@ -43,7 +47,8 @@ def index(request):
     old_time = statuses[-1].created_at
 
     return render_to_response('tweet.html', {
-        'screen_name': target_screen_anme,
+        'user': tm.me(),
+        'target_sn': target_screen_anme,
         'res': res.items(),
         'statuses': statuses,
         'limit_info': limit_info,
