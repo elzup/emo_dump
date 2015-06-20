@@ -1,8 +1,9 @@
 {% extends "base.html" %}
-{% block title %}テストページ{% endblock %}
+{% block title %}EmoDump{% endblock %}
 
 {% block content %}
     <h1>EmoDump</h1>
+    {{ static }}
     <p>ログインユーザ:
         <a href="http://twitter.com/{{ user.screen_name }}">@{{ user.screen_name }}</a>
         <img src='http://www.paper-glasses.com/api/twipi/{{ user.screen_name }}/mini' alt='profile image' width='24'

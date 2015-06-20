@@ -20,17 +20,17 @@ config =
   scripts:
     source: './src/coffee'
     watch: './src/coffee/*.coffee'
-    destination: './static/javascripts/'
+    destination: './emo_dump/static/javascripts/'
     option:
       bare: true
   stylus:
     source: './src/stylus'
     watch: './src/stylus/*.styl'
-    destination: './static/stylesheets/'
+    destination: './emo_dump/static/stylesheets/'
   sass:
     source: './src/sass'
     watch: './src/sass/*.sass'
-    destination: './static/stylesheets/'
+    destination: './emo_dump/static/stylesheets/'
 
 # error handle
 handleError = (err) ->
