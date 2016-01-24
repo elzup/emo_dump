@@ -1,0 +1,4 @@
+svn+http://cabocha.googlecode.com/svn/trunk/python@r99
+mecab-python==0.996
+cabocha-python==0.69
+tweepy==3.4.0
