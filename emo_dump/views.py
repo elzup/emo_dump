@@ -36,7 +36,7 @@ def index(request):
     statuses = tm.user_timeline(target_screen_anme, page_count=page_count)
 
     cm = CabochaManager()
-    res = cm.analyze_tweets(statuses)
+    res = cm.analyze_tweets_set(statuses)
 
     # limit
     limit_info = tm.rate_limit_status_userstimeline()
@@ -46,10 +46,11 @@ def index(request):
     new_time = statuses[0].created_at
     old_time = statuses[-1].created_at
 
-    return render_to_response('tweet.html', {
+    return render_to_response('tweet_each.html', {
         'user': tm.me(),
         'target_sn': target_screen_anme,
-        'res': res.items(),
+        'res': res,
+        'page_count': page_count,
         'statuses': statuses,
         'limit_info': limit_info,
         'status_count': len(statuses),

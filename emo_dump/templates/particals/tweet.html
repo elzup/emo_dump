@@ -1,0 +1,9 @@
+<p>
+    {{ tweet.text }}
+</p>
+<ul>
+    {% for word, emo in emos %}
+        <li>{{ word }} -> {{ emo }}</li>
+    {% endfor %}
+</ul>
+

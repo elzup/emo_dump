@@ -1,5 +1,6 @@
 import CaboCha
 import re
+import code
 
 
 class CabochaManager:
@@ -18,6 +19,21 @@ class CabochaManager:
                 results[mod].append(ref)
         return results
 
+    def analyze_tweets_set(self, tweets):
+        """
+        tweet ごとの結果オブジェクトとして返す
+        :param tweets:
+        :return: dict[str, list[str]]
+        """
+        results = []
+        for tweet in tweets:
+            text = self.filter_text(tweet)
+            results.append({
+                "tweet": tweet,
+                "emos": self.emo_parse(text).items()
+            })
+        return results
+
     def emo_parse(self, text):
         """
         テキストから嗜好辞書を作成する.
@@ -31,6 +47,7 @@ class CabochaManager:
         tree = cp.parse(text)
 
         emo_list = {}
+        # 各チャンクに対して見ていく
         for i in range(tree.chunk_size()):
             chunk = tree.chunk(i)
 
@@ -51,21 +68,25 @@ class CabochaManager:
             link_chunk_part = link_token.feature.split(',')[0]
 
             # 形容詞節, 名詞節のペアであるか
-            if \
-                    not (chunk_part == "名詞" and link_chunk_part == "形容詞"):
+            if not (chunk_part == "名詞" and link_chunk_part == "形容詞"):
                 continue
 
             chunk_indep = self.chunk_independant(tree, chunk)
-            link_chunk_indep = self.chunk_independant(tree, link_chunk)
+            link_chunk_indep = self.chunk_surface(tree, link_chunk)
             if chunk_indep == "" or link_chunk_indep == "":
                 continue
 
-            if chunk_part == "形容詞":
-                chunk_indep, link_chunk_indep = link_chunk_indep, chunk_indep
+            # if chunk_part == "形容詞":
+            #     chunk_indep, link_chunk_indep = link_chunk_indep, chunk_indep
 
             emo_list[chunk_indep] = link_chunk_indep
 
         return emo_list
+
+    def chunk_surface(self, tree, chunk):
+        return ''.join(
+                [tree.token(i).surface
+                    for i in range(chunk.token_pos,chunk.token_pos + chunk.token_size)])
 
     def chunk_independant(self, tree, chunk):
         """
