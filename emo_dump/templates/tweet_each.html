@@ -33,10 +33,19 @@
         <p>取得数: {{ status_count }}</p>
         <p>範囲: {{ new_time }} - {{ old_time }}</p>
         <a href="/auth/del">ログアウト</a>
-        {% for obj in res %}
-            {% if obj.emos %}
-                {% include 'particals/tweet.html' with tweet=obj.tweet emos=obj.emos  %}
-            {% endif %}
-        {% endfor %}
+        <table>
+            <thead>
+            <tr>
+                <th>target</th>
+                <th>emotion</th>
+                <th>text</th>
+            </tr>
+            </thead>
+            {% for obj in res %}
+                {% if obj.emos %}
+                    {% include 'particals/tweet.html' with tweet=obj.tweet emos=obj.emos %}
+                {% endif %}
+            {% endfor %}
+        </table>
     {% endif %}
 {% endblock %}

@@ -1,9 +1,9 @@
-<p>
-    {{ tweet.text }}
-</p>
-<ul>
-    {% for word, emo in emos %}
-        <li>{{ word }} -> {{ emo }}</li>
-    {% endfor %}
-</ul>
-
+{% for word, emo in emos %}
+    <tr>
+        <td>{{ word }}</td>
+        <td>{{ emo }}</td>
+    {% if forloop.counter == 1 %}
+        <td rowspan="{{ emos|length }}">{{ tweet.text }}</td>
+    {% endif %}
+    </tr>
+{% endfor %}
