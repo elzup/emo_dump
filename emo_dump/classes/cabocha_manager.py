@@ -30,7 +30,7 @@ class CabochaManager:
             text = self.filter_text(tweet)
             results.append({
                 "tweet": tweet,
-                "emos": self.emo_parse(text).items()
+                "emos": self.emo_parse(text)
             })
         return results
 
@@ -46,7 +46,7 @@ class CabochaManager:
         cp = CaboCha.Parser()
         tree = cp.parse(text)
 
-        emo_list = {}
+        emo_list = []
         # 各チャンクに対して見ていく
         for i in range(tree.chunk_size()):
             chunk = tree.chunk(i)
@@ -71,7 +71,8 @@ class CabochaManager:
             if not (chunk_part == "名詞" and link_chunk_part == "形容詞"):
                 continue
 
-            chunk_indep = self.chunk_independant(tree, chunk)
+            chunk_indep = self.chunk_surface_head(tree, chunk)
+            chunk_indep_func = self.chunk_surface_func(tree, chunk)
             link_chunk_indep = self.chunk_surface(tree, link_chunk)
             if chunk_indep == "" or link_chunk_indep == "":
                 continue
@@ -79,36 +80,27 @@ class CabochaManager:
             # if chunk_part == "形容詞":
             #     chunk_indep, link_chunk_indep = link_chunk_indep, chunk_indep
 
-            emo_list[chunk_indep] = link_chunk_indep
-
+            emo_list.append({
+                'target': chunk_indep,
+                'func': chunk_indep_func,
+                'emo': link_chunk_indep
+            })
         return emo_list
 
     def chunk_surface(self, tree, chunk):
         return ''.join(
                 [tree.token(i).surface
-                    for i in range(chunk.token_pos,chunk.token_pos + chunk.token_size)])
+                    for i in range(chunk.token_pos, chunk.token_pos + chunk.token_size)])
 
-    def chunk_independant(self, tree, chunk):
-        """
-        自立語のみを返す
-        :param chunk:
-        :return: str
-        """
-        text = ''
-        for i in range(chunk.token_pos, chunk.token_pos + chunk.token_size):
-            token = tree.token(i)
-            if not self.is_indepenedant(token.feature.split(",")[1]):
-                break
-            text += token.surface
-        return text
+    def chunk_surface_head(self, tree, chunk):
+        return ''.join(
+                [tree.token(i).surface
+                 for i in range(chunk.token_pos, chunk.token_pos + chunk.func_pos)])
 
-    def is_indepenedant(self, part):
-        """
-        自立語であるかどうか
-        :param part:
-        :return: bool
-        """
-        return part in ["自立", "固有名詞", "数", "一般", "形容動詞語幹", "接尾", "副詞可能", "サ変接続"]
+    def chunk_surface_func(self, tree, chunk):
+        return ''.join(
+                [tree.token(i).surface
+                 for i in range(chunk.token_pos + chunk.func_pos, chunk.token_pos + chunk.token_size)])
 
     def filter_text(self, tweet):
         """
