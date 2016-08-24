@@ -1,0 +1,10 @@
+{% for emo in emos %}
+    <tr>
+        <td>{{ emo.target }}</td>
+        <td>{{ emo.func }}</td>
+        <td>{{ emo.emo }}</td>
+    {% if forloop.counter == 1 %}
+        <td rowspan="{{ emos|length }}">{{ tweet.text }}</td>
+    {% endif %}
+    </tr>
+{% endfor %}

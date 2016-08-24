@@ -13,7 +13,7 @@
         {% if target_sn %}
             ユーザ名: <input type="search" name="sn" value="{{ target_sn }}">
             消費API: <input type="number" value="{{ page_count }}" min="1" max="180" name="pc">
-        {%  else %}
+        {% else %}
             ユーザ名: <input type="search" name="sn">
             消費API: <input type="number" value="3" min="1" max="180" name="pc">
         {% endif %}
@@ -33,8 +33,20 @@
         <p>取得数: {{ status_count }}</p>
         <p>範囲: {{ new_time }} - {{ old_time }}</p>
         <a href="/auth/del">ログアウト</a>
-        {% for key, val in res %}
-            <p>{{ key }} -> {{ val }}</p>
-        {% endfor %}
+        <table>
+            <thead>
+            <tr>
+                <th>target</th>
+                <th>func</th>
+                <th>emotion</th>
+                <th>text</th>
+            </tr>
+            </thead>
+            {% for obj in res %}
+                {% if obj.emos %}
+                    {% include 'particals/tweet.html' with tweet=obj.tweet emos=obj.emos %}
+                {% endif %}
+            {% endfor %}
+        </table>
     {% endif %}
 {% endblock %}
